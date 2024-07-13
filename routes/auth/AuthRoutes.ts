@@ -14,6 +14,7 @@ import {
  */
 const AuthRouter = express.Router();
 
+
 /**
  * Signs up a new user.
  *

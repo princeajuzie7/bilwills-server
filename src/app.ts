@@ -23,11 +23,12 @@ config()
  */
 const app: Application = express();
 
-const clienturl = process.env.CLIENT_LIVE_URL;
+const clienturl = "https://bilwills.vercel.app";
 
 if (!clienturl) {
   throw new Error("CLIENT_LIVE_URL is not defined");
 }
+
 
 /**
  * Sets the origins allowed to send requests to the Express application.
@@ -41,7 +42,13 @@ const origin = ["http://localhost:3000", clienturl];
  * @param none
  * @returns none
  */
-app.use(cors({ origin: origin, credentials: true, methods: ["GET,HEAD,PUT,PATCH,POST,DELETE"] }));
+app.use(
+  cors({
+    origin: origin,
+    credentials: true,
+    methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
+  })
+);
 
 /**
  * Parses JSON data for the Express application.
