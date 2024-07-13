@@ -75,8 +75,8 @@ export const attachCookiesToResponse = ({
       signed: true,
       expires: new Date(Date.now() + oneDay),
       sameSite: "lax",
-      //   domain: 'https://bilwills.vercel.app',
-      // path: '/'
+        domain: 'https://bilwills.vercel.app',
+      path: '/'
     });
 
     res.cookie("refreshToken", refreshTokenJWT, {
@@ -85,7 +85,7 @@ export const attachCookiesToResponse = ({
       signed: true,
       expires: new Date(Date.now() + longerEXP),
       sameSite: "lax",
-      // domain: 'https://bilwills.vercel.app',
-      // path: '/'
+      domain: 'https://bilwills.vercel.app',
+      path: '/'
     });
   };
