@@ -51,16 +51,6 @@ export function isTokenValid(token: string): Payload {
   }
 }
 
-/**
- * Checks if the user agent belongs to an iOS device.
- * @param {string} userAgent - The user agent string from the request.
- * @returns {boolean} - True if the user agent matches an iOS device.
- */
-function isIOS(userAgent: string): boolean {
-  return /iP(hone|od|ad)/.test(userAgent) || /Macintosh/.test(userAgent) && /Mobile/.test(userAgent);
-}
-
-
 export const attachCookiesToResponse = ({
   res,
   user,
@@ -75,15 +65,15 @@ export const attachCookiesToResponse = ({
 
   const oneDay = 1000 * 60 * 60 * 24;
   const longerEXP = 1000 * 60 * 60 * 24 * 30;
-   const userAgent = res.req.headers["user-agent"] || "unknown";
-   const sameSite: "lax" | "none" = isIOS(userAgent) ? "lax" : "none";
 
   res.cookie("accessToken", acccessTokenJWT, {
     httpOnly: true,
     secure: true,
     signed: true,
     expires: new Date(Date.now() + oneDay),
-    sameSite:sameSite,
+    sameSite: "lax",
+    domain:   process.env.NODE_ENV === "production" ? "https://bilwills.vercel.app" : 'http://localhost:3000',
+    path: "/",
   });
 
   res.cookie("refreshToken", refreshTokenJWT, {
@@ -91,6 +81,12 @@ export const attachCookiesToResponse = ({
     secure: true,
     signed: true,
     expires: new Date(Date.now() + longerEXP),
-    sameSite: sameSite,
+    sameSite: "lax",
+    domain:
+      process.env.NODE_ENV === "production"
+        ? "https://bilwills.vercel.app"
+        : "http://localhost:3000",
+    path: "/",
+    
   });
 };
