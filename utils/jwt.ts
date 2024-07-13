@@ -71,7 +71,9 @@ export const attachCookiesToResponse = ({
     secure: true,
     signed: true,
     expires: new Date(Date.now() + oneDay),
-    sameSite: "strict",
+    sameSite: "lax",
+    domain:   process.env.NODE_ENV === "production" ? "https://bilwills.vercel.app" : 'http://localhost:3000',
+    path: "/",
   });
 
   res.cookie("refreshToken", refreshTokenJWT, {
@@ -79,6 +81,7 @@ export const attachCookiesToResponse = ({
     secure: true,
     signed: true,
     expires: new Date(Date.now() + longerEXP),
-    sameSite: "strict"
+    sameSite: "lax",
+    path: "/",
   });
 };
