@@ -198,12 +198,15 @@ async function Signin(
     console.log(ispasswordCorrect, "ispasswordCorrect");
     if (!ispasswordCorrect) {
       console.log("password incorrect");
+      
       throw new UnAuthorized("invalid credentials");
     }
 
     // if (!user.isVerified) {
+    
     //   throw new UnAuthorized("Please verify your email first");
     // }
+    
 
     const tokenUser = createTokenUser(user);
     let refreshToken = "";
@@ -300,9 +303,11 @@ async function verifyPasswordResetToken(
 
     res.status(httpStatus.OK).json({ message: "valid token" });
   } catch (error: Error | any) {
-    throw new Error(error);
+    console.log("Error went on here ====> ", error)
   }
 }
+
+
 
 /**
  * Updates the user's password.
@@ -354,6 +359,8 @@ async function updatePassword(req: Request, res: Response, next: NextFunction) {
   }
 }
 
+
+
 // async function GoogleAuth() {
 //   console.log('google auth hit')
 //   passport.authenticate("google", {scope: ["profile", "email"]});
@@ -380,6 +387,12 @@ async function updatePassword(req: Request, res: Response, next: NextFunction) {
  */
 function ShowCurrentUser(req: Request, res: Response) {
   return res.status(httpStatus.OK).json({ user: req.user });
+}
+
+
+function LogOut(req: Request, res: Response) {
+  
+  
 }
 export {
   Signup,
