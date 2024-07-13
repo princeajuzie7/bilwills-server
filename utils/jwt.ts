@@ -77,7 +77,7 @@ export const attachCookiesToResponse = ({
   const longerEXP = 1000 * 60 * 60 * 24 * 30;
   const userAgent = res.req.headers["user-agent"] || "unknown";
   console.log("User-Agent:", userAgent); // Log user agent for debugging
-  const sameSite: "strict" | "none" = isIOS(userAgent) ? "strict" : "none";
+  const sameSite: "lax" | "none" = isIOS(userAgent) ? "lax" : "none";
   res.cookie("accessToken", acccessTokenJWT, {
     httpOnly: true,
     secure: true,
