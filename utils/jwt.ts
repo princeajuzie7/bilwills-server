@@ -74,7 +74,7 @@ export const attachCookiesToResponse = ({
       secure: process.env.NODE_ENV === "production",
       signed: true,
       expires: new Date(Date.now() + oneDay),
-      sameSite: "none",
+      sameSite: "lax",
         domain: 'https://bilwills.vercel.app',
       path: '/'
     });
@@ -84,7 +84,7 @@ export const attachCookiesToResponse = ({
       secure: process.env.NODE_ENV === "production",
       signed: true,
       expires: new Date(Date.now() + longerEXP),
-      sameSite: "none",
+      sameSite: "lax",
       domain: 'https://bilwills.vercel.app',
       path: '/'
     });
