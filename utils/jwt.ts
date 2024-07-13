@@ -59,26 +59,33 @@ export const attachCookiesToResponse = ({
   res: Response;
   user: any;
   refreshToken: string;
-}) => {
-  const acccessTokenJWT = createJWT({ payload: { user } });
-  const refreshTokenJWT = createJWT({ payload: { user, refreshToken } });
+  }) => {
 
-  const oneDay = 1000 * 60 * 60 * 24;
-  const longerEXP = 1000 * 60 * 60 * 24 * 30;
+  
+    let path = '/'
+    const acccessTokenJWT = createJWT({ payload: { user } });
+    const refreshTokenJWT = createJWT({ payload: { user, refreshToken } });
 
-  res.cookie("accessToken", acccessTokenJWT, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    signed: true,
-    expires: new Date(Date.now() + oneDay),
-    sameSite: "none",
-  });
+    const oneDay = 1000 * 60 * 60 * 24;
+    const longerEXP = 1000 * 60 * 60 * 24 * 30;
 
-  res.cookie("refreshToken", refreshTokenJWT, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    signed: true,
-    expires: new Date(Date.now() + longerEXP),
-    sameSite: "none",
-  });
-};
+    res.cookie("accessToken", acccessTokenJWT, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      signed: true,
+      expires: new Date(Date.now() + oneDay),
+      sameSite: "none",
+        domain: 'https://bilwills.vercel.app',
+      path: '/'
+    });
+
+    res.cookie("refreshToken", refreshTokenJWT, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      signed: true,
+      expires: new Date(Date.now() + longerEXP),
+      sameSite: "none",
+      domain: 'https://bilwills.vercel.app',
+      path: '/'
+    });
+  };
