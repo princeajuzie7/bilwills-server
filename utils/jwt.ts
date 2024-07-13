@@ -57,7 +57,7 @@ export function isTokenValid(token: string): Payload {
  * @returns {boolean} - True if the user agent matches an iOS device.
  */
 function isIOS(userAgent: string): boolean {
-  return /iP(hone|od|ad)/.test(userAgent) || /Macintosh/.test(userAgent) && /Mobile/.test(userAgent);
+  return /iP(hone|od|ad)/.test(userAgent) || (/Macintosh/.test(userAgent) && /Mobile/.test(userAgent));
 }
 
 
@@ -75,9 +75,9 @@ export const attachCookiesToResponse = ({
 
   const oneDay = 1000 * 60 * 60 * 24;
   const longerEXP = 1000 * 60 * 60 * 24 * 30;
-   const userAgent = res.req.headers["user-agent"] || "unknown";
-   const sameSite: "lax" | "none" = isIOS(userAgent) ? "lax" : "none";
-
+  const userAgent = res.req.headers["user-agent"] || "unknown";
+  console.log("User-Agent:", userAgent); // Log user agent for debugging
+  const sameSite: "strict" | "none" = isIOS(userAgent) ? "strict" : "none";
   res.cookie("accessToken", acccessTokenJWT, {
     httpOnly: true,
     secure: true,
