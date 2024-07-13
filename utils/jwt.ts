@@ -71,10 +71,11 @@ export const attachCookiesToResponse = ({
 
     res.cookie("accessToken", acccessTokenJWT, {
       httpOnly: true,
-      secure: false,
       signed: true,
-      expires: new Date(Date.now() + oneDay),
+      secure: false,
       sameSite: "strict",
+      expires: new Date(Date.now() + oneDay),
+
       // domain: "https://bilwills.vercel.app",
       // path: "/",
     });
@@ -83,8 +84,9 @@ export const attachCookiesToResponse = ({
       httpOnly: true,
       secure: false,
       signed: true,
-      expires: new Date(Date.now() + longerEXP),
       sameSite: "strict",
+      expires: new Date(Date.now() + longerEXP),
+
       // domain: "https://bilwills.vercel.app",
       // path: "/",
     });
