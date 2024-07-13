@@ -35,7 +35,7 @@ if (!clienturl) {
  * @param none
  * @returns none
  */
-const origin = ["http://localhost:3000", clienturl];
+const origin = ["http://localhost:3000", "https://bilwills.vercel.app"];
 
 /**
  * Configures CORS settings for the Express application.

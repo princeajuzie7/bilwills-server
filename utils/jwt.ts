@@ -59,35 +59,26 @@ export const attachCookiesToResponse = ({
   res: Response;
   user: any;
   refreshToken: string;
-  }) => {
+}) => {
+  const acccessTokenJWT = createJWT({ payload: { user } });
+  const refreshTokenJWT = createJWT({ payload: { user, refreshToken } });
 
-  
-    let path = '/'
-    const acccessTokenJWT = createJWT({ payload: { user } });
-    const refreshTokenJWT = createJWT({ payload: { user, refreshToken } });
+  const oneDay = 1000 * 60 * 60 * 24;
+  const longerEXP = 1000 * 60 * 60 * 24 * 30;
 
-    const oneDay = 1000 * 60 * 60 * 24;
-    const longerEXP = 1000 * 60 * 60 * 24 * 30;
+  res.cookie("accessToken", acccessTokenJWT, {
+    httpOnly: true,
+    secure: true,
+    signed: true,
+    expires: new Date(Date.now() + oneDay),
+    sameSite: "strict",
+  });
 
-    res.cookie("accessToken", acccessTokenJWT, {
-      httpOnly: true,
-      signed: true,
-      secure: false,
-      sameSite: "strict",
-      expires: new Date(Date.now() + oneDay),
-
-      domain: "https://bilwills.vercel.app",
-      path: "/",
-    });
-
-    res.cookie("refreshToken", refreshTokenJWT, {
-      httpOnly: true,
-      secure: false,
-      signed: true,
-      sameSite: "strict",
-      expires: new Date(Date.now() + longerEXP),
-
-      domain: "https://bilwills.vercel.app",
-      path: "/",
-    });
-  };
+  res.cookie("refreshToken", refreshTokenJWT, {
+    httpOnly: true,
+    secure: true,
+    signed: true,
+    expires: new Date(Date.now() + longerEXP),
+    sameSite: "strict"
+  });
+};
