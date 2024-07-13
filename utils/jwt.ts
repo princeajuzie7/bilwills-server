@@ -68,17 +68,17 @@ export const attachCookiesToResponse = ({
 
   res.cookie("accessToken", acccessTokenJWT, {
     httpOnly: true,
-    secure: true,
+    secure: false,
     signed: true,
     expires: new Date(Date.now() + oneDay),
-    sameSite: "none",
+    sameSite: "strict",
   });
 
   res.cookie("refreshToken", refreshTokenJWT, {
     httpOnly: true,
-    secure: true,
+    secure: false,
     signed: true,
     expires: new Date(Date.now() + longerEXP),
-    sameSite: "none"
+    sameSite: "strict"
   });
 };
