@@ -83,7 +83,7 @@ export const attachCookiesToResponse = ({
     // secure: true,
     signed: true,
     expires: new Date(Date.now() + oneDay),
-    // sameSite:sameSite,
+    // sameSite:"none",
   });
 
   res.cookie("refreshToken", refreshTokenJWT, {
@@ -91,6 +91,6 @@ export const attachCookiesToResponse = ({
     // secure: true,
     signed: true,
     expires: new Date(Date.now() + longerEXP),
-    // sameSite: sameSite,
+    // sameSite: "none",
   });
 };
