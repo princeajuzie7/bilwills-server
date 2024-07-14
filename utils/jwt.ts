@@ -79,18 +79,18 @@ export const attachCookiesToResponse = ({
   console.log("User-Agent:", userAgent); // Log user agent for debugging
   const sameSite: "lax" | "none" = isIOS(userAgent) ? "lax" : "none";
   res.cookie("accessToken", acccessTokenJWT, {
-    httpOnly: true,
-    secure: true,
+    // httpOnly: true,
+    // secure: true,
     signed: true,
     expires: new Date(Date.now() + oneDay),
-    sameSite:sameSite,
+    // sameSite:sameSite,
   });
 
   res.cookie("refreshToken", refreshTokenJWT, {
-    httpOnly: true,
-    secure: true,
+    // httpOnly: true,
+    // secure: true,
     signed: true,
     expires: new Date(Date.now() + longerEXP),
-    sameSite: sameSite,
+    // sameSite: sameSite,
   });
 };
