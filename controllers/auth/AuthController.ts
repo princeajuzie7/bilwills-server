@@ -18,7 +18,6 @@ interface Userbody {
   username: string;
   password: string;
   email: string;
-  userdp: string;
 }
 
 const ClientLiveUrl = process.env.CLIENT_LIVE_URL;
@@ -43,7 +42,7 @@ const origin =
  */
 async function Signup(req: Request, res: Response, next: NextFunction) {
   console.log("auth controller hit successfully");
-  const { username, email, password, userdp }: Userbody = req.body;
+  const { username, email, password }: Userbody = req.body;
 
   try {
 
@@ -60,7 +59,6 @@ async function Signup(req: Request, res: Response, next: NextFunction) {
       email,
       password,
       verificationToken,
-      userdp,
     });
 
     await sendVerificationEmail({
@@ -75,6 +73,7 @@ async function Signup(req: Request, res: Response, next: NextFunction) {
     if (!user) {
       console.log("incorrect email ");
       throw new UnAuthorized("invalid credentials");
+      
     }
 
     const ispasswordCorrect = await user.comparePassword(password);
