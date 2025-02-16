@@ -1,5 +1,5 @@
 import express, { Express, Request, Response, NextFunction } from "express";
-import bcryptjs from "bcryptjs";
+
 import userModel from "../../models/userModel";
 import * as jwt from "jsonwebtoken";
 import { log } from "console";
@@ -74,7 +74,7 @@ async function Signup(req: Request, res: Response, next: NextFunction) {
       console.log("incorrect email ");
       throw new UnAuthorized("invalid credentials");
 
-      
+
     }
 
     const ispasswordCorrect = await user.comparePassword(password);
