@@ -1,6 +1,5 @@
 import mongoose, { Document, Model } from "mongoose";
-// import bycrpt from "bcryptjs";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs"; // Use bcryptjs instead of bcrypt
 import validator from "validator";
 
 /**
@@ -29,10 +28,10 @@ interface UserDocument extends Document {
   userdp: string;
   googleId: string;
   comparePassword(userpassword: string): Promise<boolean>;
-  organization: string[]
+  organization: string[];
 }
 
-interface UserModel extends Model<UserDocument> {
+export interface UserModel extends Model<UserDocument> {
   // You can add static methods here if needed
 }
 
@@ -46,9 +45,6 @@ const emailValidator = (email: string) => {
  * @param {mongoose.Schema<UserDocument, UserModel>} UserSchema - A Mongoose schema for the user document.
  * @returns {mongoose.Model<UserDocument, UserModel>} - A Mongoose model for the user document.
  */
-
-
-
 const UserSchema = new mongoose.Schema<UserDocument, UserModel>(
   {
     username: {
@@ -83,13 +79,11 @@ const UserSchema = new mongoose.Schema<UserDocument, UserModel>(
     passwordTokenExpiration: {
       type: Date,
     },
-    organization: [
-    {type: mongoose.Schema.ObjectId, ref: 'organization'}
-    ]
+    organization: [{ type: mongoose.Schema.ObjectId, ref: "organization" }],
   },
   { timestamps: true }
 );
--
+
 /**
  * Pre-save middleware to hash the password before saving the user document.
  *
@@ -102,7 +96,7 @@ UserSchema.pre("save", async function (next) {
   }
 
   try {
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(10); // bcryptjs is used for hashing
     this.password = await bcrypt.hash(this.password, salt);
     next();
   } catch (error: any) {
@@ -110,19 +104,18 @@ UserSchema.pre("save", async function (next) {
   }
 });
 
-
-
 /**
  * Compares the provided password with the stored password hash.
  *
  * @param {string} userPassword - The password to compare with the stored hash.
  * @returns {Promise<boolean>} - A promise that resolves to a boolean value indicating whether the passwords match.
  */
-UserSchema.methods.comparePassword = async function (userPassword: string): Promise<boolean> {
-  const isMatch = await bcrypt.compare(userPassword, this.password);
+UserSchema.methods.comparePassword = async function (
+  userPassword: string
+): Promise<boolean> {
+  const isMatch = await bcrypt.compare(userPassword, this.password); // bcryptjs used here
   return isMatch;
 };
-
 
 /**
  * Represents a schema for a user document in the database.

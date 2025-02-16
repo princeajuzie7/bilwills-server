@@ -13,7 +13,7 @@ import { attachCookiesToResponse } from "../../utils/jwt";
 import sendPasswordResetToken from "../../utils/sendPasswordResetToken";
 import createHash from "../../utils/createHash";
 import passport from "passport";
-
+import { Users } from "../../utils/createTokenUser";
 interface Userbody {
   username: string;
   password: string;
@@ -128,7 +128,7 @@ async function verifyEmail(req: Request, res: Response) {
 
     if (user.isVerified === true) {
          
-      const tokenUser = createTokenUser(user);
+      const tokenUser = createTokenUser(user as unknown as Users);
       let refreshToken = "";
       const existingToken = await TokenModel.findOne({ user: user._id });
   
@@ -207,8 +207,7 @@ async function Signin(
     //   throw new UnAuthorized("Please verify your email first");
     // }
     
-
-    const tokenUser = createTokenUser(user);
+      const tokenUser = createTokenUser(user as unknown as Users);
     let refreshToken = "";
     const existingToken = await TokenModel.findOne({ user: user._id });
 

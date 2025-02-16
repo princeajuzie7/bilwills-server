@@ -5,7 +5,7 @@ import { Document } from "mongoose"
  * Interface representing a user in the system.
  * Extends the Mongoose Document interface to include additional user-specific fields.
  */
-interface Users extends Document {
+export interface Users extends Document {
     /**
      * The username of the user.
      */
