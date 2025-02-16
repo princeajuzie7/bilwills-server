@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": " nodemon  src/app.ts",
     "build": "pnpm install && tsc",
-    "start": "node dist/src/app.js"
+    "start": "node src/app.ts"
   },
   "keywords": [],
   "author": "",
