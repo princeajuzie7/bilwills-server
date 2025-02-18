@@ -1,6 +1,6 @@
 import express, { Express, Request, Response, NextFunction } from "express";
 import httpStatus from "http-status";
-
+import jwt, { JwtPayload } from "jsonwebtoken";
 import passport from "passport";
 import userModel from "../../models/userModel";
 
@@ -11,12 +11,14 @@ import userModel from "../../models/userModel";
  * @returns The currently authenticated user, or an error response.
  */
 async function ShowCurrentUser(req: Request, res: Response) {
-  const userId = req.user;
+
+    const decodedToken = req.user as JwtPayload;
+    const userid = decodedToken.id;
 
   try {
     const user = await userModel
-      .findById(userId)
-      .select({ password: 0, verificationToken : 0}); // Exclude password field
+      .findById(userid)
+      .select({ password: 0, verificationToken: 0 }); // Exclude password field
 
     return res.status(httpStatus.OK).json({ user });
   } catch (error) {

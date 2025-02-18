@@ -23,7 +23,7 @@ export function sendPasswordResetToken({
   origin: string;
   passwordResetToken: string;
 }): Promise<SMTPTransport.SentMessageInfo> {
-  const resetlink = `${origin}/auth/verifypasswordresetoken/?token=${passwordResetToken}`;
+  const resetlink = `${origin}/reset-password?token=${passwordResetToken}`;
   const message = `<p> Hey ${username} please click on this link to reset your email <a href="${resetlink}"> reset password</a></p>`;
 
   return SendMail({

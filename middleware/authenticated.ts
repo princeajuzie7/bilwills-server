@@ -1,7 +1,12 @@
 import { isTokenValid, attachCookiesToResponse } from "../utils/jwt";
 import { Request, Response, NextFunction } from "express";
 import TokenSchema from "../models/TokenModel";
+import { config } from "dotenv";
 import { BadRequestError, UnAuthorized } from "../errors";
+import jwt, { JwtPayload } from "jsonwebtoken";
+
+config();
+const secretKey: string = process.env.JWT_SECRET || "";
 
 /**
  * Authenticates the user by checking the validity of the access token or refresh token.
@@ -25,34 +30,27 @@ export async function authenticated(
     accessToken,
   }: { refreshToken: string; accessToken: string } = req.signedCookies;
 
+
+  const authHeader = req.headers.authorization; // Ensure this matches the cookie name in the browser
+
+  if (!authHeader) {
+    return next(new UnAuthorized("Unauthorized access"));
+  }
+
+  const token = authHeader.split(" ")[1];
+
   try {
-    if (accessToken) {
-      const payload = isTokenValid(accessToken);
-      req.user = payload.user;
-      return next();
+    const decodedToken = isTokenValid(token) as JwtPayload;
+
+    if (!decodedToken) {
+      return next(new UnAuthorized("You are not logged in"));
     }
 
-    const payload = isTokenValid(refreshToken);
+    req.user = decodedToken;
 
-    const existingToken = await TokenSchema.findOne({
-      user: payload.user.userId,
-      refreshToken: payload.refreshToken,
-    });
-
-    if (!existingToken || !existingToken.isValid) {
-      throw new UnAuthorized("Authentication invalid");
-    }
-
-    attachCookiesToResponse({
-      res,
-      user: payload.user,
-      refreshToken: existingToken.refreshToken,
-    });
-    req.user = payload.user;
-    return next(); // Call next() here to proceed to the next middleware
+    next();
   } catch (error) {
-    // Handle the error properly here, for example:
-    return next(new UnAuthorized("Authentication invalid"));
+    res.status(401).json({ message: "Invalid token" });
   }
 }
 

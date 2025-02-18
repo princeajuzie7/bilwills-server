@@ -9,7 +9,7 @@ import sendVerificationEmail from "../../utils/sendVerificationEmail";
 import httpStatus, { BAD_REQUEST, OK } from "http-status";
 import createTokenUser from "../../utils/createTokenUser";
 import TokenModel from "../../models/TokenModel";
-import { attachCookiesToResponse } from "../../utils/jwt";
+import { attachCookiesToResponse,createJWT } from "../../utils/jwt";
 import sendPasswordResetToken from "../../utils/sendPasswordResetToken";
 import createHash from "../../utils/createHash";
 import passport from "passport";
@@ -18,6 +18,15 @@ interface Userbody {
   username: string;
   password: string;
   email: string;
+}
+
+interface ProviderSignupBody {
+  provider: "google" | "github";
+  email: string;
+  password: string;
+  username: string;
+  type: "signup" | "login";
+  userdp: string;
 }
 
 const ClientLiveUrl = process.env.CLIENT_LIVE_URL;
@@ -42,14 +51,14 @@ const origin =
  */
 async function Signup(req: Request, res: Response, next: NextFunction) {
   console.log("auth controller hit successfully");
-  const { username, email, password }: Userbody = req.body;
+  const { username, email, password}: Userbody = req.body;
 
   try {
 
     
   const EmailAlreadyExist = await userModel.findOne({ email });
 
-  if (EmailAlreadyExist) {
+  if (EmailAlreadyExist ) {
     throw new UnAuthorized("Email already exist");
   }
 
@@ -60,6 +69,9 @@ async function Signup(req: Request, res: Response, next: NextFunction) {
       password,
       verificationToken,
     });
+
+ 
+
 
     await sendVerificationEmail({
       name: newUser?.username,
@@ -77,6 +89,15 @@ async function Signup(req: Request, res: Response, next: NextFunction) {
 
     }
 
+           const payload = {
+             id: user._id,
+             email: user.email,
+           };
+
+           const maxAge = 90 * 24 * 60 * 60 * 1000;
+
+           const token = createJWT({ payload });
+
     const ispasswordCorrect = await user.comparePassword(password);
     console.log(ispasswordCorrect, "ispasswordCorrect");
     if (!ispasswordCorrect) {
@@ -86,6 +107,7 @@ async function Signup(req: Request, res: Response, next: NextFunction) {
 
     res.status(httpStatus.CREATED).json({
       message: "Success! Please check your mail to verify your account",
+      token,
     });
 
     log(newUser, "newUser");
@@ -95,6 +117,76 @@ async function Signup(req: Request, res: Response, next: NextFunction) {
   }
 }
 
+
+export async function SignupWithProvider(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  console.log("OAuth signup controller hit successfully");
+  const { provider, username, email, password, type, userdp }: ProviderSignupBody =
+    req.body;
+
+  try {
+    // Check if email already exists
+    const existingUser = await userModel.findOne({ email });
+
+    // If user exists but was created with a different provider
+    if (existingUser && type === "login") {
+      if (existingUser.provider !== provider) {
+        throw new UnAuthorized(
+          `Email already exists with ${existingUser.provider} authentication`
+        );
+      }
+      // If user exists with same provider, we can update their details
+      const token = createJWT({
+        payload: {
+          id: existingUser._id,
+          email: existingUser.email,
+        },
+      });
+
+      return res.status(httpStatus.OK).json({
+        message: "Login successful",
+        token,
+      });
+    }
+
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(40).toString("hex");
+
+    // Create new user
+    const newUser = await userModel.create({
+      username,
+      email,
+      password, // This is already hashed as sub+email from client
+      verificationToken,
+      provider,
+      isVerified: provider === "google" || provider === "github", // Google emails are pre-verified
+      userdp: userdp,
+    });
+
+
+    // Generate JWT token
+    const token = createJWT({
+      payload: {
+        id: newUser._id,
+        email: newUser.email,
+      },
+    });
+
+    // Send response
+    res.status(httpStatus.CREATED).json({
+      message: "Account created successfully",
+      token,
+    });
+
+    log(newUser, "newUser created with provider");
+  } catch (error: any) {
+    console.error("OAuth signup error:", error);
+    next(error);
+  }
+}
 
 /**
  * Verifies an email address by comparing the provided verification token with the stored token for the given email address.
@@ -150,7 +242,7 @@ async function verifyEmail(req: Request, res: Response) {
       refreshToken = crypto.randomBytes(40).toString("hex");
       const userAgent = req.headers["user-agent"];
       const ip = req.ip;
-      const userToken = { refreshToken, ip, userAgent, user: user._id };
+      const userToken: { refreshToken: string; ip: string | undefined; userAgent: string | undefined; user: unknown } = { refreshToken, ip, userAgent, user: user._id };
       await TokenModel.create(userToken);
       attachCookiesToResponse({ res, user: tokenUser, refreshToken });
        }
@@ -221,17 +313,45 @@ async function Signin(
       refreshToken = existingToken.refreshToken;
 
       attachCookiesToResponse({ res, user: tokenUser, refreshToken });
-      res.status(OK).json({ user: tokenUser });
+
+      
+    const token = createJWT({
+      payload: {
+        id: user._id,
+        email: user.email,
+      },
+    });
+
+      
+      res.status(OK).json({
+        tokenUser: tokenUser,
+        token: token,
+        message: "logged in successfully",
+      });
       return;
     }
 
     refreshToken = crypto.randomBytes(40).toString("hex");
+
+    const token = createJWT({
+      payload: {
+        id: user._id,
+        email: user.email,
+      },
+    });
+
     const userAgent = req.headers["user-agent"];
     const ip = req.ip;
     const userToken = { refreshToken, ip, userAgent, user: user._id };
     await TokenModel.create(userToken);
-    attachCookiesToResponse({ res, user: tokenUser, refreshToken });
-    res.status(OK).json({ user: tokenUser, message: "logged in successfully" });
+    attachCookiesToResponse({ res, user: tokenUser,  refreshToken });
+    res
+      .status(OK)
+      .json({
+        tokenUser: tokenUser,
+        token: token,
+        message: "logged in successfully",
+      });
   } catch (error) {
     next(error);
   }
@@ -267,7 +387,7 @@ async function forgotPassword(req: Request, res: Response, next: NextFunction) {
     user.passwordTokenExpiration = passwordRestTokenExipiry;
     await user.save();
     res.status(httpStatus.OK).json({
-      message: "Please check your email to reset your password",
+      message: "Link sent Sucesfully please check your email",
     });
   } catch (error) {
     next(error);
@@ -288,24 +408,38 @@ async function verifyPasswordResetToken(
   next: NextFunction
 ): Promise<void> {
   const { token } = req.body;
+
+  if (!token) {
+   res
+      .status(httpStatus.BAD_REQUEST)
+      .json({ message: "Token is required" });
+        return
+  }
+
   const encryptedToken = createHash(token);
   const currentDate = Date.now();
+
   try {
     const user = await userModel.findOne({
       passwordToken: encryptedToken,
       passwordTokenExpiration: { $gt: currentDate },
     });
 
-    if (!user || !token) {
-      throw new UnAuthorized("invalid token or token expired");
+    if (!user) {
+       res
+        .status(httpStatus.UNAUTHORIZED)
+        .json({ message: "Invalid token or token expired" });
+        return;
     }
 
-    res.status(httpStatus.OK).json({ message: "valid token" });
-  } catch (error: Error | any) {
-    console.log("Error went on here ====> ", error)
+    res.status(httpStatus.OK).json({ message: "Valid token" });
+  } catch (error) {
+    console.error("Error verifying password reset token:", error);
+    res
+      .status(httpStatus.INTERNAL_SERVER_ERROR)
+      .json({ message: "An error occurred while verifying the token" });
   }
 }
-
 
 
 /**

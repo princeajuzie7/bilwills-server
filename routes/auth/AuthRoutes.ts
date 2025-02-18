@@ -6,6 +6,7 @@ import {
   forgotPassword,
   updatePassword,
   verifyPasswordResetToken,
+  SignupWithProvider
  
 } from "../../controllers/auth";
 
@@ -25,6 +26,7 @@ const AuthRouter = express.Router();
  * @returns {void} - No response is returned, instead the user data is processed and stored.
  */
 AuthRouter.route('/signup').post(Signup);
+AuthRouter.route('/signup-provider').post(SignupWithProvider);
 
 /**
  * Signs in an existing user.
@@ -79,7 +81,7 @@ AuthRouter.route('/updatepassword').post(updatePassword);
  * @param {express.NextFunction} next - The next middleware function in the chain.
  * @returns {void} - No response is returned, instead the user's reset token is verified.
  */
-AuthRouter.route("/verifypasswordresetoken/").post(
+AuthRouter.route("/verifypasswordresetoken").post(
   verifyPasswordResetToken
 );
 

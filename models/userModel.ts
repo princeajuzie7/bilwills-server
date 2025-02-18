@@ -1,3 +1,6 @@
+
+
+
 import mongoose, { Document, Model } from "mongoose";
 import bcrypt from "bcryptjs"; // Use bcryptjs instead of bcrypt
 import validator from "validator";
@@ -16,24 +19,119 @@ import validator from "validator";
  * @property {Date | string} passwordTokenExpiration - The expiration date or time of the password reset token.
  * @property {function(): Promise<boolean>} comparePassword - A method to compare the user's password with a provided password.
  */
+
+type Provider = "google" | "github";
+type SubscriptionTier = "free" | "pro" | "enterprise";
+type Theme = "light" | "dark" | "system";
+
 interface UserDocument extends Document {
+  // Basic Profile
   username: string;
   email: string;
   password: string;
+  userdp: string;
+  provider: Provider;
+
+  // Authentication
   verificationToken: string;
   isVerified: boolean;
   verified: Date;
   passwordToken?: string;
   passwordTokenExpiration: Date | string;
-  userdp: string;
-  googleId: string;
+
+  // Subscription & Billing
+  subscriptionTier: SubscriptionTier;
+  subscriptionStatus: "active" | "cancelled" | "expired";
+  subscriptionRenewalDate?: Date;
+  billingAddress?: {
+    line1: string;
+    line2?: string;
+    city: string;
+    state: string;
+    country: string;
+    postalCode: string;
+  };
+  paymentMethods: Array<{
+    type: "card" | "paypal";
+    last4?: string;
+    brand?: string;
+    expiryMonth?: number;
+    expiryYear?: number;
+    isDefault: boolean;
+  }>;
+
+  // Usage & Limits
+  monthlyDownloads: {
+    count: number;
+    limit: number;
+    resetDate: Date;
+  };
+  totalDownloads: number;
+
+  // Icons & Favorites
+  favoriteIcons: Array<{
+    iconId: mongoose.Schema.Types.ObjectId;
+    dateAdded: Date;
+    lastUsed: Date;
+    customProperties?: {
+      color?: string;
+      size?: number;
+      animation?: string;
+    };
+  }>;
+  customIcons: Array<{
+    iconId: mongoose.Schema.Types.ObjectId;
+    name: string;
+    dateCreated: Date;
+    lastModified: Date;
+  }>;
+
+  // Settings & Preferences
+  settings: {
+    theme: Theme;
+    emailNotifications: {
+      marketing: boolean;
+      updates: boolean;
+      usage: boolean;
+    };
+    defaultIconProperties: {
+      size: number;
+      color: string;
+      animation: string;
+    };
+    autoDownload: boolean;
+    showPreviewAnimations: boolean;
+    showDimensions: boolean;
+  };
+
+  // Organization & Teams
+  organizations: Array<{
+    orgId: mongoose.Schema.Types.ObjectId;
+    role: "owner" | "admin" | "member";
+    joinedAt: Date;
+  }>;
+
+  // Usage History
+  recentActivity: Array<{
+    type: "download" | "favorite" | "create" | "modify";
+    iconId: mongoose.Schema.Types.ObjectId;
+    timestamp: Date;
+    details?: Record<string, any>;
+  }>;
+
+  // API Access
+  apiKeys: Array<{
+    key: string;
+    name: string;
+    createdAt: Date;
+    lastUsed: Date;
+    permissions: string[];
+  }>;
+
+  // Methods
   comparePassword(userpassword: string): Promise<boolean>;
-  organization: string[];
 }
 
-export interface UserModel extends Model<UserDocument> {
-  // You can add static methods here if needed
-}
 
 const emailValidator = (email: string) => {
   return /\S+@\S+\.\S+/.test(email);
@@ -45,58 +143,254 @@ const emailValidator = (email: string) => {
  * @param {mongoose.Schema<UserDocument, UserModel>} UserSchema - A Mongoose schema for the user document.
  * @returns {mongoose.Model<UserDocument, UserModel>} - A Mongoose model for the user document.
  */
-const UserSchema = new mongoose.Schema<UserDocument, UserModel>(
+const UserSchema = new mongoose.Schema<UserDocument>(
   {
+    // Basic Profile
     username: {
       type: String,
-      require: true,
+      required: [true, "Please provide a username"],
+      unique: true,
+      trim: true,
     },
     email: {
       type: String,
-      require: [true, "please provide email"],
+      required: [true, "Please provide an email"],
+      unique: true,
       validate: {
         validator: emailValidator,
-        message: "please provide valid email",
+        message: "Please provide a valid email",
       },
     },
-    userdp: {
-      type: String,
-    },
-    googleId: String,
     password: {
       type: String,
-      require: [true, "please provide a password"],
+      required: [true, "Please provide a password"],
+      minlength: 8,
     },
+ 
+    userdp: {
+      type: String,
+      default: "", // Default avatar URL
+    },
+    provider: {
+      type: String,
+      enum: ["google", "github", ],
+    
+    },
+
+    // Authentication
     verificationToken: String,
     isVerified: {
       type: Boolean,
       default: false,
     },
     verified: Date,
-    passwordToken: {
+    passwordToken: String,
+    passwordTokenExpiration: Date,
+
+    // Subscription & Billing
+    subscriptionTier: {
       type: String,
+      enum: ["free", "pro", "enterprise"],
+      default: "free",
     },
-    passwordTokenExpiration: {
-      type: Date,
+    subscriptionStatus: {
+      type: String,
+      enum: ["active", "cancelled", "expired"],
+      default: "active",
     },
-    organization: [{ type: mongoose.Schema.ObjectId, ref: "organization" }],
+    subscriptionRenewalDate: Date,
+    billingAddress: {
+      line1: String,
+      line2: String,
+      city: String,
+      state: String,
+      country: String,
+      postalCode: String,
+    },
+    paymentMethods: [
+      {
+        type: {
+          type: String,
+          enum: ["card", "paypal"],
+          required: true,
+        },
+        last4: String,
+        brand: String,
+        expiryMonth: Number,
+        expiryYear: Number,
+        isDefault: {
+          type: Boolean,
+          default: false,
+        },
+      },
+    ],
+
+    // Usage & Limits
+    monthlyDownloads: {
+      count: {
+        type: Number,
+        default: 0,
+      },
+      limit: {
+        type: Number,
+        default: 100,
+      },
+      resetDate: Date,
+    },
+    totalDownloads: {
+      type: Number,
+      default: 0,
+    },
+
+    // Icons & Favorites
+    favoriteIcons: [
+      {
+        iconId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Icon",
+        },
+        dateAdded: {
+          type: Date,
+          default: Date.now,
+        },
+        lastUsed: Date,
+        customProperties: {
+          color: String,
+          size: Number,
+          animation: String,
+        },
+      },
+    ],
+    customIcons: [
+      {
+        iconId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Icon",
+        },
+        name: String,
+        dateCreated: {
+          type: Date,
+          default: Date.now,
+        },
+        lastModified: Date,
+      },
+    ],
+
+    // Settings & Preferences
+    settings: {
+      theme: {
+        type: String,
+        enum: ["light", "dark", "system"],
+        default: "system",
+      },
+      emailNotifications: {
+        marketing: {
+          type: Boolean,
+          default: true,
+        },
+        updates: {
+          type: Boolean,
+          default: true,
+        },
+        usage: {
+          type: Boolean,
+          default: true,
+        },
+      },
+      defaultIconProperties: {
+        size: {
+          type: Number,
+          default: 24,
+        },
+        color: {
+          type: String,
+          default: "#000000",
+        },
+        animation: {
+          type: String,
+          default: "none",
+        },
+      },
+      autoDownload: {
+        type: Boolean,
+        default: false,
+      },
+      showPreviewAnimations: {
+        type: Boolean,
+        default: true,
+      },
+      showDimensions: {
+        type: Boolean,
+        default: true,
+      },
+    },
+
+    // Organization & Teams
+    organizations: [
+      {
+        orgId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Organization",
+        },
+        role: {
+          type: String,
+          enum: ["owner", "admin", "member"],
+          required: true,
+        },
+        joinedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+
+    // Usage History
+    recentActivity: [
+      {
+        type: {
+          type: String,
+          enum: ["download", "favorite", "create", "modify"],
+          required: true,
+        },
+        iconId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Icon",
+        },
+        timestamp: {
+          type: Date,
+          default: Date.now,
+        },
+        details: mongoose.Schema.Types.Mixed,
+      },
+    ],
+
+    // API Access
+    apiKeys: [
+      {
+        key: String,
+        name: String,
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+        lastUsed: Date,
+        permissions: [String],
+      },
+    ],
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
 );
 
-/**
- * Pre-save middleware to hash the password before saving the user document.
- *
- * @param {import("mongoose").HookNextFunction} next - Mongoose's built-in `next` function to pass control to the next middleware.
- */
+// Password hashing middleware
 UserSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) {
-    // If password is not modified, proceed to the next middleware
-    return next();
-  }
+  if (!this.isModified("password")) return next();
 
   try {
-    const salt = await bcrypt.genSalt(10); // bcryptjs is used for hashing
+    const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
     next();
   } catch (error: any) {
@@ -123,4 +417,4 @@ UserSchema.methods.comparePassword = async function (
  * @param {mongoose.Schema<UserDocument, UserModel>} UserSchema - A Mongoose schema for the user document.
  * @returns {mongoose.Model<UserDocument, UserModel>} - A Mongoose model for the user document.
  */
-export default mongoose.model<UserDocument, UserModel>("usermodel", UserSchema);
+export default mongoose.model<UserDocument>("usermodel", UserSchema);

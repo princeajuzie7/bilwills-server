@@ -22,7 +22,7 @@ export default async function sendVerificationEmail({
   origin: string | string[];
 }): Promise<SMTPTransport.SentMessageInfo> {
   // Construct the URL for the verification link.
-  const verifyEmail = `${origin}/auth/verifyemail?token=${verificationToken}&email=${email}`;
+  const verifyEmail = `${origin}/verified?token=${verificationToken}&email=${email}`;
 
   // Construct the HTML message for the email.
   const message = `<p>Please confirm your email by clicking on the following link:</p>
